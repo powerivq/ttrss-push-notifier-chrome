@@ -76,6 +76,7 @@ var regid = '';
 
 window.onload = function() {
   chrome.storage.onChanged.addListener(function(changes, namespace) {
+    var update = false;
     for (var key in changes) {
       if (key === 'timeout') timeout = changes.timeout.newValue;
       if (key === 'paused') {
@@ -85,9 +86,14 @@ window.onload = function() {
       }
       if (key === 'url') {
         url = changes.url.newValue;
-        updateUnreadCount();
+        update = true;
+      }
+      if (key === 'username') {
+        username = changes.username.newValue;
+        update = true;
       }
     }
+    if (update) updateUnreadCount();
   });
   
   chrome.gcm.onMessage.addListener(function(message) {
