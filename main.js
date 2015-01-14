@@ -5,6 +5,12 @@ function registerCallback(regID) {
 }
 
 function creationCallback(notID) {
+  chrome.notifications.getAll(function(result) {
+    if (result[notID] === undefined) {
+      if (!paused && msgList.length) doNotify();
+    }
+  });
+
   currentNotID = notID;
   setTimeout(function() {
     chrome.notifications.clear(notID, function() {});
@@ -12,8 +18,8 @@ function creationCallback(notID) {
 }
 
 function updateUnreadCount() {
-  if (!url) return;
-  $.ajax(url)
+  if (!url || !username) return;
+  $.ajax(url + 'public.php?op=getUnread&login=' + username)
     .done(function(data) {
       chrome.browserAction.setBadgeText({text: data});
     })
@@ -23,21 +29,41 @@ function updateUnreadCount() {
 }
 
 function doNotify() {
-  var msg = msgList[0];
-  chrome.notifications.create('feed-msg' + new Date().toISOString(),
-    {
-      type: 'basic',
-      title: msg.title,
-      iconUrl: msg.iconUrl ? msg.iconUrl : 'icon.png',
-      priority: 2,
-      message: msg.detail,
-      contextMessage: msg.source,
-      buttons: [
-                 {
-                   title: 'Open Link'
-                 }                          
-               ]
-    }, creationCallback);
+  var msg = msgList.splice(0,1)[0];
+  var options =
+  {
+    type: 'basic',
+    title: msg.title,
+    iconUrl: 'icon.png',
+    priority: 2,
+    message: msg.detail,
+    contextMessage: msg.source,
+    buttons: [
+               { title: 'Open Link' }, { title: 'Flag as Read' }                        
+             ]
+  };
+  $.ajax(msg.iconUrl ? msg.iconUrl : 'NOT_HERE')
+   .done(function() {
+      options.iconUrl = msg.iconUrl;
+      chrome.notifications.create(msg.url, options, creationCallback);
+   })
+   .fail(function() {
+      chrome.notifications.create(msg.url, options, creationCallback);
+   });
+}
+
+function clickBtn(notID, index) {
+  flagAsRead(notID);
+  if (index == 0) window.open(notID);
+  chrome.notifications.clear(notID, function() {});
+}
+
+function flagAsRead(notID) {
+  $.ajax({
+    url: url + 'plugins/zzz_ttrss_push_notifier/flag.php',
+    type: 'POST',
+    data: {url: notID, user: username, reg_id: regid}
+  }).done(function(data){console.log('resp: '+data);}).fail(function(){console.log('noway');});
 }
 
 var msgList = [];
@@ -45,6 +71,8 @@ var timeout = 15;
 var paused = false;
 var currentNotID = '';
 var url = '';
+var username = '';
+var regid = '';
 
 window.onload = function() {
   chrome.storage.onChanged.addListener(function(changes, namespace) {
@@ -68,32 +96,28 @@ window.onload = function() {
     if (msgList.length === 1 && !paused) doNotify();
   });
   
-  chrome.notifications.onButtonClicked.addListener(function() {
-    window.open(msgList[0].url);
-    chrome.notifications.clear(currentNotID, function() {});
+  chrome.notifications.onButtonClicked.addListener(clickBtn);
+  
+  chrome.notifications.onClicked.addListener(function(notID) {
+    clickBtn(notID, 0);
   });
   
-  chrome.notifications.onClicked.addListener(function() {
-    window.open(msgList[0].url);
-    chrome.notifications.clear(currentNotID, function() {});
-  });
-  
-  chrome.notifications.onClosed.addListener(function() {
-    msgList.splice(0, 1);
+  chrome.notifications.onClosed.addListener(function(notID, byUser) {
     if (msgList.length && !paused) doNotify();
   });
   
-  chrome.storage.local.get(['paused', 'url', 'registered', 'timeout'], function(result) {
+  chrome.storage.local.get(['paused', 'url', 'username', 'registered', 'timeout'], function(result) {
     if (result.paused) {
       paused = true;
       chrome.browserAction.setIcon({path: 'icon_dark.png'});
     }
-    if (result.url) {
-      url = result.url;
-      updateUnreadCount();
-    }
+    if (result.url) url = result.url;
+    if (result.username) username = result.username;
+    updateUnreadCount();
     if (result.timeout) timeout = result.timeout;
-    if (result.registered) return;
+    if (result.registered) {
+      regid = result.registered; return;
+    }
     chrome.gcm.register(senderIds, registerCallback);
   });
   

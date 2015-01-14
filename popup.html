@@ -4,40 +4,35 @@
 	<meta charset="utf-8">
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" />
 	<title>TTRSS Push Notifier</title>
-    <style type="text/css">
-      body {
-        width: 500px;
-      }
-      
-      div.container {
-        margin: 20px;
-      }
-    </style>
 </head>
+<body style="width: 300px; height: 600px">
   <script src="jquery-2.1.3.min.js"></script>
   <script src="popup.js"></script>
   
-  <div class="container">
+  <div class="container" style="width: 70%;">
     <div class="page-header">
       <h3>TTRSS Push Notifier</h3>
     </div>
     <div class="row">
-      <p>Status: <strong id="statusBar"></strong></p>
+      <p>Status: <strong id="statusBar"></strong><strong id="checkBar"></strong></p>
       <button id="btnStatus"></button>
     </div>
     <div class="row">
-      <p><strong>TTRSS Unread URL: </strong><br/>(http://yourdomain/xxx/public.php?op=getUnread&amp;login=<your_login>)</p>
+      <p><strong>TTRSS Unread URL: </strong><br/>(http://yourdomain/your_directory/)</p>
       <input id="txtUrl" type="url"/>
-      <button id="btnSetUrl">Set</button>
+    </div>
+    <div class="row">
+      <p><strong>TTRSS Username: </strong></p>
+      <input id="txtUsername" type="url"/>
     </div>
     <div class="row">
       <p><strong>Timeout (in seconds):</strong></p>
       <input id="txtTimeout" type="number"/>
-      <button id="btnChangeTimeout">Set</button>
     </div>
-    <div class="row">
+    <div class="row" style="margin-top: 5px;"><button id="apply">Apply</button></div>
+    <div class="row" style="width: 200px;">
       <p><strong>Registration ID:</strong></p>
-      <div id="regID"></div>
+      <span id="regID" style="word-wrap: break-word;"></div>
     </div>
   </div>
 </body>

@@ -16,5 +16,5 @@
    "name": "TTRSS Push Notifier",
    "permissions": [ "background", "notifications", "storage", "gcm", "clipboardWrite", "<all_urls>" ],
    "short_name": "TTRSS Push Notifier",
-   "version": "0.5.3"
+   "version": "0.9.0"
 }
